@@ -227,11 +227,16 @@ public class ChatRoom {
         while (it.hasNext()) {
             Map.Entry<String, String> entry = (Map.Entry)it.next();
 
+            // 원래 나한테는 안보내려고 했는데 나도 채팅방 리스트를 업데이트 해야하니까 받아야 할 것 같다.
+            //tokenList.add(entry.getValue());
+
             // 메시지 송신자가 아니라면 notification리스트에 넣기
-            if(!entry.getKey().equals(sendUserId)){
+            /*if(!entry.getKey().equals(sendUserId)){
                 tokenList.add(entry.getValue());
-            }
+            }*/
         }
+
+        tokenList.add("eCMZ8MAZRcOj0sVR-JKzF3:APA91bH5iUpPgJJK47LnqB35r4FQXh8O99xDW1DNL30IDEz3UdS2lAbVKNVuECiGC85x_gNDywM1aa3aCaJL-aHeejJj_pNZfITqCraS7zQQRVWupb9SKTYBbl2j3dPfbEfMwdGXibIR");
 
         return tokenList;
     }

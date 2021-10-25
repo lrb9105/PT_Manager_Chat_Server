@@ -111,6 +111,7 @@ public class ClientManagerThread extends Thread{
                         String userId = textArr[1];
                         String roomId = textArr[2];
                         int lastIdx = Integer.parseInt(textArr[3]);
+                        String firstOrOld = textArr[4];
 
                         // 4. 클라로부터 받은 마지막 메시지 인덱스
                         System.out.println("4. 클라로부터 받은 마지막 메시지 인덱스:" + text);
@@ -132,6 +133,18 @@ public class ClientManagerThread extends Thread{
                         /*chatRoom.getObjOutputList().get(i).writeObject(chatMsg);
                         chatRoom.getObjOutputList().get(i).flush();*/
                         }
+
+                        // 첫번째로 채팅방에 들어온 경우 인덱스를 -1 해줘야 한다.
+                        if(firstOrOld.equals("first")){
+                            lastIdx = lastIdx - 1;
+                        }
+
+                        // 테스트 코드...
+                        if(lastIdx == 1){
+                            lastIdx -= 1;
+                        }
+
+                        System.out.println("firstOrOld: " + firstOrOld);
 
                         /** db업데이트 해당 인덱스 이후의 모든 메시지 안읽은 사용자수 -- */
                         String sql = "UPDATE CHATTING_MSG SET  NOT_READ_USER_COUNT = NOT_READ_USER_COUNT - 1\n" +
@@ -215,7 +228,9 @@ public class ClientManagerThread extends Thread{
                             throwables.printStackTrace();
                         }
                     } else if(userName.equals("exit")){
-                        chatRoom.setUserCount(allUserCount - 1);
+                        // 사용자를 방에서 내보냄
+                        chatRoom.exitUser(chatUser);
+
                         allUserCount -= 1;
 
                         System.out.println("나갔을 때 참여자수: " + allUserCount);
@@ -224,12 +239,15 @@ public class ClientManagerThread extends Thread{
                         HashMap<String, String> tokenMap = chatRoom.getTokenMap();
                         tokenMap.remove(userId);
                         chatRoom.setTokenMap(tokenMap);
+
                     }
 
                     // 안읽은 사람 수 = 채팅방의 전체 유저수 - 현재 채팅방에 있는 유저수
                     int notReadUserCount = allUserCount - chatRoom.getUserSize();
 
                     System.out.println("아웃풋리스트 사이즈: " + chatRoom.getOutputList().size());
+                    System.out.println("allUserCount: " + allUserCount);
+                    System.out.println("chatRoom.getUserSize(): " + chatRoom.getUserSize());
 
 
                     /** DB에서 가장 높은 인덱스 값 가져오기*/
@@ -309,7 +327,7 @@ public class ClientManagerThread extends Thread{
                     }
 
                     /** notification 전송*/
-                    sendNotification(userName, msg, chatRoom.makeTokenList(chatRoom.getTokenMap(), userId));
+                    //sendNotification(userName, msg, chatRoom.makeTokenList(chatRoom.getTokenMap(), userId));
                 } else { //연결 종료
                     chatRoom.exitUser(chatUser);
                     break;
@@ -356,7 +374,13 @@ public class ClientManagerThread extends Thread{
             List<String> failedTokens = new ArrayList<>();
             for (int i = 0; i < responses.size(); i++) {
                 if (!responses.get(i).isSuccessful()) {
+                    System.out.println("에러코드 " + responses.get(i).getException().getErrorCode());
+                    System.out.println("에러메시지 " + responses.get(i).getException().getMessage());
+
                     failedTokens.add(tokenList.get(i) + "\n");
+                } else {
+                    System.out.println(responses.get(i).getMessageId());
+                    System.out.println("성공!");
                 }
             }
 
