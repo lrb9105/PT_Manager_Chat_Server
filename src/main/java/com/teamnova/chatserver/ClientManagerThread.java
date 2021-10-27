@@ -129,6 +129,7 @@ public class ClientManagerThread extends Thread{
                                 chatRoom.getOutputList().get(i).flush();
                             }
 
+
                             // 객체로 받아왔을 때 클라이언트에세 쏴주기
                         /*chatRoom.getObjOutputList().get(i).writeObject(chatMsg);
                         chatRoom.getObjOutputList().get(i).flush();*/
@@ -178,6 +179,7 @@ public class ClientManagerThread extends Thread{
                                 e.printStackTrace();
                             }
                         }
+
                         // 아래로 내려가지 않고 다시 while문을 돌도록
                         continue;
                     }
@@ -189,7 +191,7 @@ public class ClientManagerThread extends Thread{
                     String userId = textArr[1];
                     String roomId = textArr[2];
                     String msg = textArr[3];
-                    String now = textArr[4];
+                    String now = getTodayDateWithTime();
 
                     System.out.println("userName: " + userName);
 
@@ -280,8 +282,9 @@ public class ClientManagerThread extends Thread{
                         if(!chatRoom.getChattingMemberList().get(i).getUserId().equals(userId)){
                             chatRoom.getOutputList().get(i).println(text);
                             System.out.println("메시지가 아예 안가나?");
-                        } else { // 내가보낸 메시지인 경우 idx와 읽지않은 사용자수 보내주고 클라이언트에서 업데이트 함
-                            chatRoom.getOutputList().get(i).println(notReadUserCount + ":" + maxIdx);
+                        } else {
+                            // 내가보낸 메시지인 경우 idx와 읽지않은 사용자수, 수신시간 보내주고 클라이언트에서 업데이트 함
+                            chatRoom.getOutputList().get(i).println(notReadUserCount + ":" + maxIdx + ":" + now);
 
                             System.out.println(chatRoom.getOutputList().get(i).toString());
 
@@ -297,7 +300,7 @@ public class ClientManagerThread extends Thread{
                     /** db에 저장하기 */
                     // 2. createStatement로 DB 테이블에 데이터 추가하기
                     String sql = "INSERT INTO CHATTING_MSG (CHATTING_MEMBER_ID,CHATTING_ROOM_ID,MSG, MSG_IDX, NOT_READ_USER_COUNT, CRE_DATETIME)\n" +
-                            "VALUES ('" + userId + "', '" + roomId + "', '" + msg + "',  '" + maxIdx + "',  " +  notReadUserCount + ", NOW())";
+                            "VALUES ('" + userId + "', '" + roomId + "', '" + msg + "',  '" + maxIdx + "',  " +  notReadUserCount + ", '" + now + "' )";
 
                     System.out.println(sql);
 
