@@ -187,6 +187,10 @@ public class ClientManagerThread extends Thread{
 
                     /** 텍스트 메시지 분리 */
                     String[] textArr = text.split(":");
+                    int size = textArr.length;
+
+                    System.out.println("size: " + size);
+
                     String userName = textArr[0];
                     String userId = textArr[1];
                     String roomId = textArr[2];
@@ -251,81 +255,136 @@ public class ClientManagerThread extends Thread{
                     System.out.println("allUserCount: " + allUserCount);
                     System.out.println("chatRoom.getUserSize(): " + chatRoom.getUserSize());
 
+                    // 텍스트
+                    if(size == 7){
+                        /** DB에서 가장 높은 인덱스 값 가져오기*/
+                        Statement statement = null;
+                        int maxIdx = 0;
 
-                    /** DB에서 가장 높은 인덱스 값 가져오기*/
-                    Statement statement = null;
-                    int maxIdx = 0;
+                        try {
+                            statement = connection.createStatement();
+                            ResultSet resultSet = statement.executeQuery("SELECT MAX(MSG_IDX) MAX_IDX FROM CHATTING_MSG WHERE CHATTING_ROOM_ID = '" + roomId + "'");
+                            resultSet.next();
 
-                    try {
-                        statement = connection.createStatement();
-                        ResultSet resultSet = statement.executeQuery("SELECT MAX(MSG_IDX) MAX_IDX FROM CHATTING_MSG WHERE CHATTING_ROOM_ID = '" + roomId + "'");
-                        resultSet.next();
+                            maxIdx = resultSet.getInt("MAX_IDX") + 1;
 
-                        maxIdx = resultSet.getInt("MAX_IDX") + 1;
-
-                        resultSet.close();
-                        statement.close();
-                    } catch (SQLException throwables) {
-                        throwables.printStackTrace();
-                    }
-
-                    // 메시지 저장 시간까지 합쳐서 보냄
-                    text += ":"+now;
-                    text += ":"+notReadUserCount;
-                    text += ":"+maxIdx;
-
-                    System.out.println("text: " + text);
-
-                    /** 채팅방의 다른 유저들에게 뿌려주기 */
-                    for(int i=0; i < chatRoom.getChattingMemberList().size();++i){
-                        // 내가 보낸 메시지가 아닌경우 텍스트로 받아왔을 때 클라이언트에게 쏴주기
-                        if(!chatRoom.getChattingMemberList().get(i).getUserId().equals(userId)){
-                            chatRoom.getOutputList().get(i).println(text);
-                            System.out.println("메시지가 아예 안가나?");
-                        } else {
-                            // 내가보낸 메시지인 경우 idx와 읽지않은 사용자수, 수신시간 보내주고 클라이언트에서 업데이트 함
-                            chatRoom.getOutputList().get(i).println(notReadUserCount + ":" + maxIdx + ":" + now);
-
-                            System.out.println(chatRoom.getOutputList().get(i).toString());
-
-                            System.out.println("메시지가 아예 안가나?222");
+                            resultSet.close();
+                            statement.close();
+                        } catch (SQLException throwables) {
+                            throwables.printStackTrace();
                         }
-                        chatRoom.getOutputList().get(i).flush();
 
-                        // 객체로 받아왔을 때 클라이언트에세 쏴주기
+                        // 메시지 저장 시간까지 합쳐서 보냄
+                        text += ":"+now;
+                        text += ":"+notReadUserCount;
+                        text += ":"+maxIdx;
+
+                        System.out.println("text: " + text);
+
+                        /** 채팅방의 다른 유저들에게 뿌려주기 */
+                        for(int i=0; i < chatRoom.getChattingMemberList().size();++i){
+                            // 내가 보낸 메시지가 아닌경우 텍스트로 받아왔을 때 클라이언트에게 쏴주기
+                            if(!chatRoom.getChattingMemberList().get(i).getUserId().equals(userId)){
+                                chatRoom.getOutputList().get(i).println(text);
+                                System.out.println("메시지가 아예 안가나?");
+                            } else {
+                                // 내가보낸 메시지인 경우 idx와 읽지않은 사용자수, 수신시간 보내주고 클라이언트에서 업데이트 함
+                                chatRoom.getOutputList().get(i).println(notReadUserCount + ":" + maxIdx + ":" + now);
+
+                                System.out.println(chatRoom.getOutputList().get(i).toString());
+
+                                System.out.println("메시지가 아예 안가나?222");
+                            }
+                            chatRoom.getOutputList().get(i).flush();
+
+                            // 객체로 받아왔을 때 클라이언트에세 쏴주기
                         /*chatRoom.getObjOutputList().get(i).writeObject(chatMsg);
                         chatRoom.getObjOutputList().get(i).flush();*/
-                    }
+                        }
 
-                    /** db에 저장하기 */
-                    // 2. createStatement로 DB 테이블에 데이터 추가하기
-                    String sql = "INSERT INTO CHATTING_MSG (CHATTING_MEMBER_ID,CHATTING_ROOM_ID,MSG, MSG_IDX, NOT_READ_USER_COUNT, CRE_DATETIME)\n" +
-                            "VALUES ('" + userId + "', '" + roomId + "', '" + msg + "',  '" + maxIdx + "',  " +  notReadUserCount + ", '" + now + "' )";
+                        /** db에 저장하기 */
+                        // 2. createStatement로 DB 테이블에 데이터 추가하기
+                        String sql = "INSERT INTO CHATTING_MSG (CHATTING_MEMBER_ID,CHATTING_ROOM_ID,MSG, MSG_IDX, NOT_READ_USER_COUNT, CRE_DATETIME)\n" +
+                                "VALUES ('" + userId + "', '" + roomId + "', '" + msg + "',  '" + maxIdx + "',  " +  notReadUserCount + ", '" + now + "' )";
 
-                    System.out.println(sql);
+                        System.out.println(sql);
 
-                    // 연결을 한 부분의 인스턴스 (현재 클래스의 메소드로 호출하기)
-                    Statement stmt = null; // 디비 관련 statement
-                    System.out.println("sql = " + sql); // SQL문은 항상 확인하는 것이 좋음
+                        // 연결을 한 부분의 인스턴스 (현재 클래스의 메소드로 호출하기)
+                        Statement stmt = null; // 디비 관련 statement
+                        System.out.println("sql = " + sql); // SQL문은 항상 확인하는 것이 좋음
 
-                    int count = 0; // 데이터가 몇개 변경 되었는지 확인하는 변수
+                        int count = 0; // 데이터가 몇개 변경 되었는지 확인하는 변수
 
-                    try {
-                        stmt = connection.createStatement();
-                        // 현재 연결부분에 대한 상태를 생성
-                        count = stmt.executeUpdate(sql); // 몇개가 업데이트되었는지에 대한 변수
-
-                        // 이 아래코드부터는 데이터 추가에 성공한 다음의 코드
-                        System.out.println("성공적으로 추가되었습니다." + count);
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    } finally {
                         try {
-                            if (stmt != null) { // 값이 들어가 있음
-                                stmt.close(); // statement 닫음
-                            }
+                            stmt = connection.createStatement();
+                            // 현재 연결부분에 대한 상태를 생성
+                            count = stmt.executeUpdate(sql); // 몇개가 업데이트되었는지에 대한 변수
+
+                            // 이 아래코드부터는 데이터 추가에 성공한 다음의 코드
+                            System.out.println("성공적으로 추가되었습니다." + count);
                         } catch (SQLException e) {
                             e.printStackTrace();
+                        } finally {
+                            try {
+                                if (stmt != null) { // 값이 들어가 있음
+                                    stmt.close(); // statement 닫음
+                                }
+                            } catch (SQLException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    } else if(size > 7) { //사진
+                        String msgIdx = textArr[7];
+
+                        text += notReadUserCount;
+                        text += now;
+
+                        /** 채팅방의 다른 유저들에게 뿌려주기 */
+                        for(int i=0; i < chatRoom.getChattingMemberList().size();++i){
+                            // 내가 보낸 메시지가 아닌경우 텍스트로 받아왔을 때 클라이언트에게 쏴주기
+                            if(!chatRoom.getChattingMemberList().get(i).getUserId().equals(userId)){
+                                chatRoom.getOutputList().get(i).println(text);
+                                System.out.println("메시지가 아예 안가나?");
+                            } else {
+                                // 내가보낸 메시지인 경우 idx와 읽지않은 사용자수, 수신시간 보내주고 클라이언트에서 업데이트 함
+                                chatRoom.getOutputList().get(i).println(notReadUserCount + ":" + msgIdx + ":" + now + ":" + textArr[8]);
+
+                                System.out.println(chatRoom.getOutputList().get(i).toString());
+
+                                System.out.println("메시지가 아예 안가나?222");
+                            }
+                            chatRoom.getOutputList().get(i).flush();
+                        }
+
+                        /** db에 안읽은 사용자 수 업데이트 */
+                        // 2. createStatement로 DB 테이블에 데이터 추가하기
+                        String sql = "UPDATE CHATTING_MSG SET NOT_READ_USER_COUNT = " + notReadUserCount+ ", CRE_DATETIME = '" + now + "' WHERE CHATTING_ROOM_ID = '" + roomId + "' AND MSG_IDX =  " + msgIdx;
+
+                        System.out.println(sql);
+
+                        // 연결을 한 부분의 인스턴스 (현재 클래스의 메소드로 호출하기)
+                        Statement stmt = null; // 디비 관련 statement
+                        System.out.println("sql = " + sql); // SQL문은 항상 확인하는 것이 좋음
+
+                        int count = 0; // 데이터가 몇개 변경 되었는지 확인하는 변수
+
+                        try {
+                            stmt = connection.createStatement();
+                            // 현재 연결부분에 대한 상태를 생성
+                            count = stmt.executeUpdate(sql); // 몇개가 업데이트되었는지에 대한 변수
+
+                            // 이 아래코드부터는 데이터 추가에 성공한 다음의 코드
+                            System.out.println("성공적으로 수정되었습니다." + count);
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        } finally {
+                            try {
+                                if (stmt != null) { // 값이 들어가 있음
+                                    stmt.close(); // statement 닫음
+                                }
+                            } catch (SQLException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
 
