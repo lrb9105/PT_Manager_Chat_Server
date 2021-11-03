@@ -333,11 +333,11 @@ public class ClientManagerThread extends Thread{
                                 e.printStackTrace();
                             }
                         }
-                    } else if(size > 7) { //사진
+                    } else if(size > 7) { //사진(9개)
                         String msgIdx = textArr[7];
 
-                        text += notReadUserCount;
-                        text += now;
+                        text += ":" + notReadUserCount;
+                        text += ":" + now;
 
                         /** 채팅방의 다른 유저들에게 뿌려주기 */
                         for(int i=0; i < chatRoom.getChattingMemberList().size();++i){
